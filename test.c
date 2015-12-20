@@ -5,10 +5,10 @@
 
 void mem256_set(mem256_t *rop, uint64_t a, uint64_t b, uint64_t c, uint64_t d)
 {
-    rop->_limb[_HIGH] = a;
-    rop->_limb[_MID_HIGH] = b;
-    rop->_limb[_MID_LOW] = c;
-    rop->_limb[_LOW] = d;
+    rop->limb[3] = a;
+    rop->limb[2] = b;
+    rop->limb[1] = c;
+    rop->limb[0] = d;
 }
 
 void mem256_seta(mem256_t *rop, uint64_t value)
@@ -18,10 +18,10 @@ void mem256_seta(mem256_t *rop, uint64_t value)
 
 bool mem256_eq(mem256_t *rop, uint64_t a, uint64_t b, uint64_t c, uint64_t d)
 {
-    return rop->_limb[_HIGH] == a &&
-        rop->_limb[_MID_HIGH] == b &&
-        rop->_limb[_MID_LOW] == c &&
-        rop->_limb[_LOW] == d;
+    return rop->limb[3] == a &&
+        rop->limb[2] == b &&
+        rop->limb[1] == c &&
+        rop->limb[0] == d;
 }
 
 bool mem256_eqa(mem256_t *rop, uint64_t value)
@@ -38,8 +38,8 @@ bool mem256_eqa(mem256_t *rop, uint64_t value)
                 "Assert: Expected (%llu, %llu, %llu, %llu) but found"         \
                 " (%llu, %llu, %llu, %llu)\n"                                 \
                 "    Function: '%s(%s, %s)'\n\n",                             \
-                a, b, c, d, (x)->_limb[3], (x)->_limb[2],                     \
-                (x)->_limb[1], (x)->_limb[0], #function, #x, #s);             \
+                a, b, c, d, (x)->limb[3], (x)->limb[2],                       \
+                (x)->limb[1], (x)->limb[0], #function, #x, #s);               \
         }                                                                     \
     } while (0)
 
