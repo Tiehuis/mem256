@@ -31,6 +31,30 @@ static int mem256_64popcnt(uint64_t x)
 #endif
 
 /**
+ * Return the index of the highest 1-bit set in a 64-bit integer.
+ */
+#if defined(__GNUC__)
+#   define mem256_64highbit(x) (64 - __builtin_clzll(x))
+#else
+static int mem256_64highbit(uint64_t x)
+{
+    int highbit = 0;
+
+    while (x > 0x10000) {
+        highbit += 16;
+        x >>= 16;
+    }
+
+    while (x) {
+        highbit++;
+        x >>= 1;
+    }
+
+    return highbit;
+}
+#endif
+
+/**
  * Shift the entire 256 memory block left by the specified shift. Any shift
  * value > 255 is first truncated before being applied.
  *
@@ -203,7 +227,7 @@ bool mem256_rshift(mem256_t *rop, int shift)
 
 /**
  * A general shift function which translates negative shifts to rshifts */
-bool mem256_shift(mem256_t *rop, int index)
+bool mem256_bshift(mem256_t *rop, int index)
 {
     return index ? mem256_lshift(rop, index) : mem256_lshift(rop, -index);
 }
@@ -221,6 +245,50 @@ int mem256_popcnt(mem256_t *rop)
 {
     return mem256_64popcnt(rop->limb[3]) + mem256_64popcnt(rop->limb[2])
              + mem256_64popcnt(rop->limb[1]) + mem256_64popcnt(rop->limb[0]);
+}
+
+/* Return the index of the highest bit set in the memory region */
+int mem256_highbit(mem256_t *rop)
+{
+    for (int i = 3; i >= 0; --i) {
+        if (rop->limb[i])
+            return mem256_64highbit(rop->limb[i]) + (i * 64);
+    }
+
+    return 0;
+}
+
+/* Fill a range of the regions with 1 from [start, end).
+ * This does not zero the memory beforehand.
+ *
+ * End should be greater than start, and both < 256.
+ * */
+void mem256_fillones(mem256_t *rop, int start, int end)
+{
+    int amount = end - start;
+
+    int i = 0;
+    while (amount > 0) {
+        rop->limb[i++] = (amount & 63) == 63 ? ~0 : (1 << (amount & 63)) - 1;
+        amount -= 64;
+    }
+
+    mem256_bshift(rop, start);
+}
+
+/* Zero a memory block */
+void mem256_zero(mem256_t *rop)
+{
+    rop->limb[0] = rop->limb[1] = rop->limb[2] = rop->limb[3] = 0;
+}
+
+/* Negate a memory block */
+void mem256_negate(mem256_t *rop)
+{
+    rop->limb[3] = ~rop->limb[3];
+    rop->limb[2] = ~rop->limb[2];
+    rop->limb[1] = ~rop->limb[1];
+    rop->limb[0] = ~rop->limb[0];
 }
 
 /* Store the bitwise-or result of op1 and op2 in rop */
